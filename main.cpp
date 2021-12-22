@@ -17,20 +17,21 @@ int main(int argc, char* argv[]) {
     return 0;
   } else {
     for (int i = 1; i < argc; i++) {
-      if (argv[i] == "-v" || argv[i] == "--verbose") {
+      std::string arg = argv[i];
+      if (arg == "-v" || arg == "--verbose") {
         // verbose mode
         verbose = true;
-      } else if (argv[i] == "-h" || argv[i] == "--help") {
+      } else if (arg == "-h" || arg == "--help") {
         std::cout << HelpMsg << std::endl;
         return 0;
       } else {
         // tm definition file
         if (tm_def_path == "") {
-          tm_def_path = argv[i];
+          tm_def_path = arg;
         }
         // tm input string
         else {
-          input = argv[i];
+          input = arg;
         }
       }
     }
@@ -43,9 +44,9 @@ int main(int argc, char* argv[]) {
   }
 
   TuringMachine tm = TuringMachine(tm_def_path, verbose);
-  tm.run();
+  // tm.run();
 
-  std::cout << 'TODO' << std::endl;
+  std::cout << "TODO" << std::endl;
 
   return 0;
 }

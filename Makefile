@@ -1,9 +1,10 @@
 cc = g++
 prom = turing
 src = main.cpp TM.cpp
+CFLAG = -std=c++11
 
 $(prom): $(src)
-	$(cc) -o $(prom) $(src)
+	$(cc) $(CFLAG) -o $(prom) $(src)
 	
 clean:
 	rm turing

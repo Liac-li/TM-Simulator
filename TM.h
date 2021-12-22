@@ -17,7 +17,8 @@ class TuringMachine {
     init_tm(TMDef);
   }
 
-  void run();
+  int run(string &input);
+  void displayTMDef();
 
  private:
   bool verbose;
@@ -43,7 +44,7 @@ class TuringMachine {
   int init_tm(string &TMDef);
   int init_delta(string &deltaDef);
 
-  int step();
+  int singalStep();
 
   // Verbose visualization
 };

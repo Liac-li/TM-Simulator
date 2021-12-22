@@ -44,7 +44,8 @@ int main(int argc, char* argv[]) {
   }
 
   TuringMachine tm = TuringMachine(tm_def_path, verbose);
-  // tm.run();
+  // tm.displayTMDef();
+  // tm.run(input);
 
   std::cout << "TODO" << std::endl;
 

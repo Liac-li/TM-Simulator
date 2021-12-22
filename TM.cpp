@@ -297,3 +297,41 @@ ErrorHandle:
   }
   return -1;
 }
+
+void TuringMachine::displayTMDef() {
+  vector<set<string>> items = {this->states, this->inputSymbols,
+                               this->tapeSymbols, this->finalStates};
+  vector<string> names = {"states", "intputSymbol", "tapeSymbol",
+                          "finalStates"};
+  for (int idx = 0; idx < 4; idx++) {
+    cout << names[idx] << " : " << endl;
+    for (string item : items[idx]) {
+      cout << item << ' ';
+    }
+    cout << endl;
+  }
+
+  cout << "startState: " << this->startState << endl;
+  cout << "blankSymbol: " << this->blankSymbol << endl;
+  cout << "tape num: " << this->numOfTapes << endl;
+
+  vector<string> keys; vector<string> vals;
+  for (auto const &m : this->transitionFunction) {
+    keys = m.first; vals = m.second;
+    for (string i : keys) {
+      cout << i << ' ';
+    }
+    for (string i : vals) {
+      cout << i << ' ';
+    }
+    cout << endl;
+  }
+}
+
+int TuringMachine::run(string &input) {
+  return -1;
+}
+
+int TuringMachine::singalStep() {
+  return -1;
+}

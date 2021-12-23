@@ -24,10 +24,10 @@ class TuringMachine {
   bool verbose;
   // TM symbols
   set<string> states;
-  set<string> inputSymbols;
+  set<char> inputSymbols;
   set<string> tapeSymbols;
   string startState;
-  string blankSymbol;
+  char blankSymbol;
   set<string> finalStates;
   int numOfTapes;
   // TODO: transition function
@@ -36,15 +36,20 @@ class TuringMachine {
                            // state
 
   // TM status
-  vector<vector<tapeCell>> tape;  // index + symbol
+  vector<vector<char>> tape;  // index + symbol
   vector<int> tapeHead;
   string curState;
+  vector<int> initHead; // use to get index of tape
 
   // Functions
   int init_tm(string &TMDef);
   int init_delta(string &deltaDef);
 
+  int globalStep = 0;
   int singalStep();
+  int checkInput(string &input);
+  int init_tape(string &input);
+  void stepDisplay();
 
   // Verbose visualization
 };

@@ -11,7 +11,7 @@ using namespace std;
  * Dec 22, 2021
  *
  * Simulate Turing Machine
- * 1. [ ] Read input from file and generate TM
+ * 1. [x] Read input from file and generate TM
  * 2. [ ] Run TM (normal, verbose)
  * 3. [ ] Multi-type TM
  */
@@ -32,6 +32,7 @@ set<string> split(string &str, char delimiter) {
    * @param str string only have target items, without blank, space
    */
   set<string> result;
+
   str += delimiter;
 
   string tmp;
@@ -53,6 +54,18 @@ string removeComment(string &str) {
 
   size_t end = res.find_last_not_of(WHITESPACE);
   return (end == string::npos) ? "" : res.substr(0, end + 1);
+}
+
+vector<int> getBound(const vector<char> tape, const int head,
+                     const char blank) {
+  int lBound = 0;
+  int rBound = tape.size() - 1;
+  
+  for (; lBound < tape.size() && tape[lBound] == blank && lBound < head; lBound++) ;
+  for (; rBound >= 0 && tape[rBound] == blank && rBound > head; rBound--);
+  
+  vector<int> res = {lBound, rBound};
+  return res;
 }
 
 // ======== TuringMachine Method ==========
@@ -125,7 +138,12 @@ int TuringMachine::init_tm(string &TMDef) {
             }
           }
 
-          this->inputSymbols = tmp_set;
+          set<char> res;
+          for (string i : tmp_set) {
+            res.insert(i[0]);
+          }
+
+          this->inputSymbols = res;
         } break;
 
         case 'G': {
@@ -171,8 +189,8 @@ int TuringMachine::init_tm(string &TMDef) {
                        tmp_line.substr(3, 3);
             goto ErroHandle;
           }
-          string blank(tmp_line, 5, 1);
-          this->blankSymbol = blank;
+          // string blank(tmp_line, 5, 1);
+          this->blankSymbol = tmp_line[5];
         } break;
 
         case 'F': {
@@ -222,6 +240,17 @@ int TuringMachine::init_tm(string &TMDef) {
       }
     }
   }
+
+  for (int i = 0; i < this->numOfTapes; i++) {
+    vector<char> tmp_tape;
+    tmp_tape.push_back(this->blankSymbol);
+
+    this->tape.push_back(tmp_tape);
+    this->tapeHead.push_back(0);
+    this->initHead.push_back(0);
+  }
+  this->curState = this->startState;
+  this->globalStep = 0;
 
   return 0;
 
@@ -299,11 +328,10 @@ ErrorHandle:
 }
 
 void TuringMachine::displayTMDef() {
-  vector<set<string>> items = {this->states, this->inputSymbols,
-                               this->tapeSymbols, this->finalStates};
-  vector<string> names = {"states", "intputSymbol", "tapeSymbol",
-                          "finalStates"};
-  for (int idx = 0; idx < 4; idx++) {
+  vector<set<string>> items = {this->states, this->tapeSymbols,
+                               this->finalStates};
+  vector<string> names = {"states", "tapeSymbol", "finalStates"};
+  for (int idx = 0; idx < 3; idx++) {
     cout << names[idx] << " : " << endl;
     for (string item : items[idx]) {
       cout << item << ' ';
@@ -311,13 +339,21 @@ void TuringMachine::displayTMDef() {
     cout << endl;
   }
 
+  cout << "Input Symbols: ";
+  for (char ch : this->inputSymbols) {
+    cout << ch << ' ';
+  }
+  cout << endl;
+
   cout << "startState: " << this->startState << endl;
   cout << "blankSymbol: " << this->blankSymbol << endl;
   cout << "tape num: " << this->numOfTapes << endl;
 
-  vector<string> keys; vector<string> vals;
+  vector<string> keys;
+  vector<string> vals;
   for (auto const &m : this->transitionFunction) {
-    keys = m.first; vals = m.second;
+    keys = m.first;
+    vals = m.second;
     for (string i : keys) {
       cout << i << ' ';
     }
@@ -329,9 +365,191 @@ void TuringMachine::displayTMDef() {
 }
 
 int TuringMachine::run(string &input) {
+  /*
+   * Run TM on given input string
+   */
+
+  checkInput(input);
+  init_tape(input);
+
+  if (this->verbose) {
+    cout << "Input: " << input << endl;
+    cout << "==================== RUN ====================" << endl;
+    stepDisplay();
+  }
+
+  int ret_code = singalStep();
+  while (ret_code == 0) ret_code = singalStep();
+
+  switch (ret_code) {
+    case 1: {  // halt
+      cout << "[Halt] Result: ";
+    } break;
+    case 2: {  // accept
+      cout << "[Accepted] Result: ";
+    } break;
+    default:
+      cerr << "Something Error in Running" << endl;
+      exit(-1);
+  }
+
+  // display the item on tape[0]
+  for (char ch : this->tape[0]) {
+    cout << ch;
+  }
+  cout << endl;
+
+  if (this->verbose) {
+    cout << "==================== END ====================" << endl;
+  }
+
   return -1;
 }
 
+int TuringMachine::checkInput(string &input) {
+  /*
+   * check input illegality
+   */
+  for (auto i = 0; i < input.length(); i++) {
+    if (this->inputSymbols.find(input[i]) ==
+        this->inputSymbols.end()) {  // not in symbol set
+      if (this->verbose) {
+        cerr << "Input: " << input << endl;
+        cerr << "==================== ERR ====================" << endl;
+        cerr << "error: '" << input[i]
+             << "' was not declared in the set of input symbols" << endl;
+        cerr << "Input: " << input << endl;
+        string pnt(7 + i, ' ');
+        pnt += "^";
+        cerr << pnt << endl;
+        cerr << "==================== END ====================" << endl;
+      } else {
+        cerr << "Input: " << input << endl;
+        cerr << input[i] << " was illegal input symbol" << endl;
+      }
+    }
+    return -1;
+  }
+  return 0;
+}
+
+int TuringMachine::init_tape(string &input) {
+  this->tape[0].pop_back();
+  for (char ch : input) {
+    this->tape[0].push_back(ch);
+  }
+  return 0;
+}
+
 int TuringMachine::singalStep() {
-  return -1;
+  /*
+   * step on in TM
+   * return: 1 => halt, 2 => accept, 0 => continue, -1 => error
+   */
+
+  this->globalStep++;
+
+  // get keys of transition
+  string heads;
+  for (int i = 0; i < this->numOfTapes; i++) {
+    heads += this->tape[i][this->tapeHead[i]];
+  }
+  vector<string> curkeys;
+  curkeys.push_back(this->curState);
+  curkeys.push_back(heads);
+  if (this->transitionFunction.find(curkeys) ==
+      this->transitionFunction.end()) {
+    // no transition exists -> halt
+    if (this->verbose) {
+      stepDisplay();
+    }
+    return 1;
+  }
+  vector<string> nextEnv = this->transitionFunction[curkeys];
+  string nextTapeVals = nextEnv[0];
+  string nextDircts = nextEnv[1];
+  string nextState = nextEnv[2];
+
+  // one step ahead on TM
+  for (int tapeId = 0; tapeId < this->numOfTapes; tapeId++) {
+    this->tape[tapeId][this->tapeHead[tapeId]] = nextTapeVals[tapeId];
+
+    if (nextDircts[tapeId] == 'r') {
+      this->tapeHead[tapeId] += 1;
+      if (this->tapeHead[tapeId] >= this->tape[tapeId].size()) {
+        this->tape[tapeId].push_back(this->blankSymbol);
+      }
+
+    } else if (nextDircts[tapeId] == 'l') {
+      // may over range with push_back, need to remain the index of tape
+      this->tapeHead[tapeId] -= 1;
+      if (this->tapeHead[tapeId] < 0) {
+        this->tapeHead[tapeId] += 1;
+        this->tape[tapeId].insert(this->tape[tapeId].begin(),
+                                  this->blankSymbol);
+        this->initHead[tapeId] += 1;  // for tape index
+      }
+    } else {  // stay
+      continue;
+    }
+  }
+  this->curState = nextState;
+
+  if (this->finalStates.find(this->curState) != this->finalStates.end()) {
+    if (this->verbose) {
+      stepDisplay();
+    }
+    return 1;
+  }
+
+  return 0;
+
+  // return -1;
+}
+
+void TuringMachine::stepDisplay() {
+  /*
+   *  Step    : 0
+   *  Index0  : 0 1 2 3 4 5 6
+   *  Tape0   : 1 0 0 1 0 0 1
+   *  Head0   : ^
+   *  Index1  : 0
+   *  Tape1   : _
+   *  Head1   : ^
+   *  State   : 0
+   *  ---------------------------------------------
+   */
+  cout << "Step  \t: " << this->globalStep << endl;
+  for (int tapeId = 0; tapeId < this->numOfTapes; tapeId++) {
+    auto tmp = getBound(this->tape[tapeId], this->tapeHead[tapeId], this->blankSymbol); 
+    int lBound = tmp[0];
+    int rBound = tmp[1];
+
+    cout << "Index" << tapeId << " \t: ";
+    vector<int> alignLength;
+    for (int i = lBound; i <= rBound; i++) {
+      int index = i - this->initHead[tapeId];
+      index = index >= 0 ? index : -index; // abs
+      cout << index << " ";
+      alignLength.push_back(to_string(index).length());
+    }
+    cout << endl;
+
+    cout << "Tape" << tapeId << " \t: ";
+    for (int i = lBound; i <= rBound; i++) {
+      string blanks = string(alignLength[i - lBound], ' '); 
+      cout << this->tape[tapeId][i] << blanks;
+    }
+    cout << endl;
+
+    cout << "Head" << tapeId << " \t: ";
+    for (int i = lBound; i < this->tapeHead[tapeId] - lBound; i++) {
+      string blanks = string(alignLength[i], ' '); 
+      cout << " " << blanks;
+    }
+    cout << "^" << endl;
+  }
+
+  cout << "State \t: " << this->curState << endl;
+  cout << "---------------------------------------------" << endl;
 }

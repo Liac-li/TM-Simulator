@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
   // tm.displayTMDef();
   tm.run(input);
 
-  std::cout << "TODO" << std::endl;
+  // std::cout << "TODO" << std::endl;
 
   return 0;
 }

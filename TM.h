@@ -49,9 +49,10 @@ class TuringMachine {
   int singalStep();
   int checkInput(string &input);
   int init_tape(string &input);
-  void stepDisplay();
+  vector<string> getNextEnv(const vector<string> keys);
 
   // Verbose visualization
+  void stepDisplay();
 };
 
 

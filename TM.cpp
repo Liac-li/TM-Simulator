@@ -1,8 +1,8 @@
 #include "TM.h"
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <algorithm>
 
 using namespace std;
 
@@ -373,7 +373,9 @@ int TuringMachine::run(string &input) {
    * Run TM on given input string
    */
 
-  if (checkInput(input) != 0) exit(-1); 
+  if (checkInput(input) != 0) {
+    exit(-1);
+  }
   init_tape(input);
 
   if (this->verbose) {
@@ -389,19 +391,21 @@ int TuringMachine::run(string &input) {
 
   switch (ret_code) {
     case 1: {  // halt
-      cout << "[Halt] Result: ";
+      if (this->verbose) cout << "[Halt] Result: ";
     } break;
     case 2: {  // accept
-      cout << "[Accepted] Result: ";
+      if (this->verbose) cout << "[Accepted] Result: ";
     } break;
     default:
-      cerr << "Something Error in Running" << endl;
+      if (this->verbose) cerr << "Something Error in Running" << endl;
       exit(-1);
   }
 
   // display the item on tape[0]
-  vector<int> tmp = getBound(this->tape[0], this->tapeHead[0], this->blankSymbol);
-  int l = tmp[0]; int r = tmp[1];
+  vector<int> tmp =
+      getBound(this->tape[0], this->tapeHead[0], this->blankSymbol);
+  int l = tmp[0];
+  int r = tmp[1];
   for (int i = l; i <= r; i++) {
     cout << this->tape[0][i];
   }
@@ -435,9 +439,10 @@ int TuringMachine::checkInput(string &input) {
         cerr << "Input: " << input << endl;
         cerr << input[i] << " was illegal input symbol" << endl;
       }
+      return -1;
     }
-    return -1;
   }
+
   return 0;
 }
 
@@ -457,7 +462,7 @@ int TuringMachine::singalStep() {
 
   this->globalStep++;
   // if (this->globalStep > 12) {
-    // return -1;
+  // return -1;
   // }
 
   // get keys of transition
@@ -585,7 +590,6 @@ vector<string> TuringMachine::getNextEnv(const vector<string> keys) {
   // vector<vector<string>> matchingKeys;
   map<vector<string>, int> mathchingKeys2priority;
 
-
   for (auto item : this->transitionFunction) {
     if (item.first[0] == keys[0]) {  // same state
       // cerr << item.first[0] << keys[0] << item.first[1] << keys[1] << endl;
@@ -594,20 +598,21 @@ vector<string> TuringMachine::getNextEnv(const vector<string> keys) {
         if (item.first[1][i] == keys[1][i] || item.first[1][i] == '*') {
           isMatch = true;
         } else {
-          isMatch = false; 
+          isMatch = false;
           break;
         }
       }
       if (isMatch) {
-        mathchingKeys2priority[item.first] = count(item.first[1].begin(), item.first[1].end(), '*');
+        mathchingKeys2priority[item.first] =
+            count(item.first[1].begin(), item.first[1].end(), '*');
       }
     }
     isMatch = false;
   }
-   
+
   int min = this->numOfTapes + 1;
   vector<string> finalKey;
-  for (auto item: mathchingKeys2priority) {
+  for (auto item : mathchingKeys2priority) {
     if (item.second < min) {
       min = item.second;
       finalKey = item.first;

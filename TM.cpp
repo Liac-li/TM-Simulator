@@ -407,7 +407,8 @@ int TuringMachine::run(string &input) {
   int l = tmp[0];
   int r = tmp[1];
   for (int i = l; i <= r; i++) {
-    cout << this->tape[0][i];
+    char c = this->tape[0][i];
+    if (c != this->blankSymbol) cout << c; // ignore the blank on the tape
   }
   cout << endl;
 
